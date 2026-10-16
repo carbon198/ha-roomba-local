@@ -1,0 +1,12 @@
+{
+  "domain": "roomba_local",
+  "name": "Roomba Local",
+  "version": "0.13.0",
+  "config_flow": true,
+  "documentation": "https://github.com/carbon198/ha-roomba-local",
+  "issue_tracker": "https://github.com/carbon198/ha-roomba-local/issues",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "requirements": [],
+  "codeowners": ["@carbon198"]
+}

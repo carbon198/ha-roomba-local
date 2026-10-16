@@ -1,0 +1,745 @@
+{
+  "title": "Roomba Local",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to your local Roomba emulator",
+        "description": "Connect one robot per integration entry. Telemetry, maps and supported controls come from your local emulator. Enter the token value without the Bearer prefix.",
+        "data": {
+          "api_url": "HTTPS server URL",
+          "bearer_token": "Bearer token"
+        }
+      },
+      "robot": {
+        "title": "Choose robot",
+        "description": "Choose a Roomba to add to Home Assistant. Only robots not already added from this emulator are shown. Options include the last six ID characters, model/SKU and IP address when available.",
+        "data": {
+          "robot_id": "Choose robot"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Replace local bearer token",
+        "description": "The token for {server} was rejected. Enter its replacement.",
+        "data": {
+          "bearer_token": "Bearer token"
+        }
+      },
+      "reconfigure": {
+        "title": "Update local server and token",
+        "description": "Update the HTTPS origin or token for {server}. The robot and existing entity identities will be preserved.",
+        "data": {
+          "bearer_token": "Bearer token",
+          "api_url": "HTTPS server URL"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Enter an HTTPS origin, a 32-character hexadecimal robot ID, and a valid token value without the Bearer prefix.",
+      "invalid_auth": "The server rejected the bearer token.",
+      "cannot_connect": "Cannot read the robot list or telemetry. Check server reachability, certificate trust, emulator version and whether the robot has reported telemetry.",
+      "no_robots": "No robots have connected to this emulator yet. Provision a robot, wait for it to connect, then submit again."
+    },
+    "abort": {
+      "all_robots_configured": "All robots reported by this emulator have already been added.",
+      "already_configured": "This robot on this server is already configured.",
+      "reauth_successful": "Token updated successfully.",
+      "reconfigure_successful": "Server settings updated successfully."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Battery"
+      },
+      "detected_pad": {
+        "name": "Detected pad",
+        "state": {
+          "padplate": "Pad plate fitted",
+          "nopad": "No pad",
+          "dispdry": "Disposable dry pad",
+          "dispwet": "Disposable wet pad",
+          "reusabledry": "Reusable dry pad",
+          "reusablewet": "Reusable wet pad",
+          "invalid": "Invalid pad"
+        }
+      },
+      "dock_error": {
+        "name": "Dock error code",
+        "state": {
+          "code_0": "OK",
+          "code_350": "Dust bag missing",
+          "code_351": "Dock clogged",
+          "code_352": "Dock sealing issue",
+          "code_353": "Dust bag full",
+          "code_354": "Dock motor failure",
+          "code_360": "Dock communication failure",
+          "code_361": "Dock evacuation report communication failure",
+          "code_362": "Dock lifetime data report communication failure",
+          "code_363": "Dock evacuation and lifetime report communication failure",
+          "code_364": "Evacuation dock detected but not communicating",
+          "code_365": "Too-frequent evacuations",
+          "code_399": "Undefined evacuation error",
+          "code_449": "Invalid dock state for refill",
+          "code_450": "Refill tank missing",
+          "code_451": "Refill tank low",
+          "code_452": "Refill tank level sensor issue",
+          "code_453": "Refill alignment failure",
+          "code_454": "Refill clogged",
+          "code_455": "Refill pump failure",
+          "code_456": "Incorrect robot tank",
+          "code_457": "Refill communication failure",
+          "code_458": "Cannot extend refill snorkel",
+          "code_459": "Cannot retract refill snorkel",
+          "code_460": "Dock tank level not decreasing",
+          "code_461": "Robot tank level not increasing",
+          "code_462": "Refill hardware issue",
+          "code_463": "Dock tank level decreasing unexpectedly",
+          "code_464": "Detergent tank missing or empty",
+          "code_650": "Clean-water tank missing",
+          "code_651": "Clean-water tank low",
+          "code_653": "Dirty-water tank missing",
+          "code_654": "Dirty-water tank full",
+          "code_668": "No pad attached",
+          "code_669": "Pad actuator stalled",
+          "code_670": "Cleaning tray out of position",
+          "code_671": "Clean-water tank empty or missing",
+          "code_672": "Dirty-water tank full or missing",
+          "code_649": "Invalid dock state for pad wash",
+          "code_652": "Clean-water level sensor issue",
+          "code_660": "Pad wash communication failure",
+          "code_661": "Dirty-water tank level not decreasing",
+          "code_662": "Dirty-water tank level not increasing",
+          "code_663": "Clean-water tank level decreasing unexpectedly",
+          "code_664": "Dirty-water tank level decreasing unexpectedly",
+          "code_665": "Pad wash hardware issue",
+          "code_753": "Pad not washed",
+          "code_756": "No pad attached",
+          "code_757": "Dock communication failure",
+          "code_749": "Invalid pad dry state",
+          "code_750": "Pad drying motor stalled",
+          "code_751": "Pad drying motor failed to start",
+          "code_752": "Pad drying actuator stalled",
+          "code_754": "Pad drying motor FET fault",
+          "code_755": "Pad drying hardware issue",
+          "code_500": "Reserved dock error",
+          "code_501": "Dock beacon path blocked",
+          "code_502": "Dock COC communication failure",
+          "code_503": "Dock Bluetooth communication failure",
+          "code_504": "Dock home switch failure",
+          "code_505": "Dock primary internal communication failure",
+          "code_506": "Dock secondary internal communication failure",
+          "code_507": "Dock Bluetooth pairing failure",
+          "code_508": "Dock primary processor update failure",
+          "code_509": "Dock secondary processor update failure",
+          "code_510": "Dock updating",
+          "code_511": "Dirty-water tank level sensor issue",
+          "code_512": "Dirty-water evacuation clogged",
+          "code_513": "Dirty-water pump failure",
+          "code_515": "Dirty-water control valve failure",
+          "code_516": "Wash-tray agitator motor stalled",
+          "code_517": "Wash tray overflowing",
+          "code_518": "Wash-tray agitator missing",
+          "code_519": "Robot not on dock contacts",
+          "code_520": "Dock infrared communication failure"
+        }
+      },
+      "dock_pad_dry_state": {
+        "name": "Pad dry status",
+        "state": {
+          "code_700": "Pad dry state unknown",
+          "code_701": "Pad dry OK",
+          "code_702": "Drying pads",
+          "code_703": "Pad drying complete",
+          "code_704": "Drying interrupted by robot",
+          "code_705": "Drying interrupted by mission",
+          "code_706": "Drying interrupted by user",
+          "code_707": "Dock updating",
+          "code_753": "Pad not washed",
+          "code_756": "No pad attached",
+          "code_757": "Dock communication failure",
+          "code_749": "Invalid pad dry state",
+          "code_750": "Pad drying motor stalled",
+          "code_751": "Pad drying motor failed to start",
+          "code_752": "Pad drying actuator stalled",
+          "code_754": "Pad drying motor FET fault",
+          "code_755": "Pad drying hardware issue"
+        }
+      },
+      "dock_pad_wash_state": {
+        "name": "Pad wash status",
+        "state": {
+          "code_600": "Pad wash state unknown",
+          "code_601": "Pad wash OK",
+          "code_602": "Washing pads",
+          "code_603": "Pad wash complete",
+          "code_604": "Wetting pads",
+          "code_605": "Pad wetting complete",
+          "code_606": "Dock updating",
+          "code_607": "Flushing wash tray",
+          "code_608": "Wash tray flush complete",
+          "code_650": "Clean-water tank missing",
+          "code_651": "Clean-water tank low",
+          "code_653": "Dirty-water tank missing",
+          "code_654": "Dirty-water tank full",
+          "code_668": "No pad attached",
+          "code_669": "Pad actuator stalled",
+          "code_670": "Cleaning tray out of position",
+          "code_671": "Clean-water tank empty or missing",
+          "code_672": "Dirty-water tank full or missing",
+          "code_649": "Invalid dock state for pad wash",
+          "code_652": "Clean-water level sensor issue",
+          "code_660": "Pad wash communication failure",
+          "code_661": "Dirty-water tank level not decreasing",
+          "code_662": "Dirty-water tank level not increasing",
+          "code_663": "Clean-water tank level decreasing unexpectedly",
+          "code_664": "Dirty-water tank level decreasing unexpectedly",
+          "code_665": "Pad wash hardware issue"
+        }
+      },
+      "dock_state": {
+        "name": "Dock status",
+        "state": {
+          "code_300": "Dock state unknown",
+          "code_301": "Dock ready",
+          "code_302": "Emptying bin",
+          "code_303": "Emptying complete",
+          "code_304": "Stopping evacuation",
+          "code_305": "Dock updating",
+          "code_350": "Dust bag missing",
+          "code_351": "Dock clogged",
+          "code_352": "Dock sealing issue",
+          "code_353": "Dust bag full",
+          "code_354": "Dock motor failure",
+          "code_360": "Dock communication failure",
+          "code_361": "Dock evacuation report communication failure",
+          "code_362": "Dock lifetime data report communication failure",
+          "code_363": "Dock evacuation and lifetime report communication failure",
+          "code_364": "Evacuation dock detected but not communicating",
+          "code_365": "Too-frequent evacuations",
+          "code_399": "Undefined evacuation error",
+          "code_400": "Refill state unknown",
+          "code_401": "Refill OK",
+          "code_402": "Refill started",
+          "code_403": "Refilling tank",
+          "code_404": "Refill complete",
+          "code_405": "Refill complete - insufficient water",
+          "code_406": "Dock updating",
+          "code_449": "Invalid dock state for refill",
+          "code_450": "Refill tank missing",
+          "code_451": "Refill tank low",
+          "code_452": "Refill tank level sensor issue",
+          "code_453": "Refill alignment failure",
+          "code_454": "Refill clogged",
+          "code_455": "Refill pump failure",
+          "code_456": "Incorrect robot tank",
+          "code_457": "Refill communication failure",
+          "code_458": "Cannot extend refill snorkel",
+          "code_459": "Cannot retract refill snorkel",
+          "code_460": "Dock tank level not decreasing",
+          "code_461": "Robot tank level not increasing",
+          "code_462": "Refill hardware issue",
+          "code_463": "Dock tank level decreasing unexpectedly",
+          "code_464": "Detergent tank missing or empty",
+          "code_600": "Pad wash state unknown",
+          "code_601": "Pad wash OK",
+          "code_602": "Washing pads",
+          "code_603": "Pad wash complete",
+          "code_604": "Wetting pads",
+          "code_605": "Pad wetting complete",
+          "code_606": "Dock updating",
+          "code_607": "Flushing wash tray",
+          "code_608": "Wash tray flush complete",
+          "code_650": "Clean-water tank missing",
+          "code_651": "Clean-water tank low",
+          "code_653": "Dirty-water tank missing",
+          "code_654": "Dirty-water tank full",
+          "code_668": "No pad attached",
+          "code_669": "Pad actuator stalled",
+          "code_670": "Cleaning tray out of position",
+          "code_671": "Clean-water tank empty or missing",
+          "code_672": "Dirty-water tank full or missing",
+          "code_649": "Invalid dock state for pad wash",
+          "code_652": "Clean-water level sensor issue",
+          "code_660": "Pad wash communication failure",
+          "code_661": "Dirty-water tank level not decreasing",
+          "code_662": "Dirty-water tank level not increasing",
+          "code_663": "Clean-water tank level decreasing unexpectedly",
+          "code_664": "Dirty-water tank level decreasing unexpectedly",
+          "code_665": "Pad wash hardware issue",
+          "code_700": "Pad dry state unknown",
+          "code_701": "Pad dry OK",
+          "code_702": "Drying pads",
+          "code_703": "Pad drying complete",
+          "code_704": "Drying interrupted by robot",
+          "code_705": "Drying interrupted by mission",
+          "code_706": "Drying interrupted by user",
+          "code_707": "Dock updating",
+          "code_753": "Pad not washed",
+          "code_756": "No pad attached",
+          "code_757": "Dock communication failure",
+          "code_749": "Invalid pad dry state",
+          "code_750": "Pad drying motor stalled",
+          "code_751": "Pad drying motor failed to start",
+          "code_752": "Pad drying actuator stalled",
+          "code_754": "Pad drying motor FET fault",
+          "code_755": "Pad drying hardware issue"
+        }
+      },
+      "firmware_version": {
+        "name": "Firmware version"
+      },
+      "last_data_received": {
+        "name": "Last data received"
+      },
+      "localized_map": {
+        "name": "Localized map"
+      },
+      "mission_area": {
+        "name": "Mission cleaned area"
+      },
+      "mission_error": {
+        "name": "Status - Error",
+        "state": {
+          "code_1": "Robot moved or on uneven surface",
+          "code_2": "Main brush stuck",
+          "code_4": "Left wheel stuck",
+          "code_5": "Right wheel stuck",
+          "code_6": "Cliff sensors need cleaning",
+          "code_7": "Left wheel sensor issue",
+          "code_9": "Bumper stuck",
+          "code_10": "Right wheel sensor issue",
+          "code_12": "Cliff sensor stall",
+          "code_14": "Bin missing",
+          "code_16": "Robot moved or on uneven surface",
+          "code_18": "Cannot reach dock",
+          "code_19": "Cannot leave dock - obstacle",
+          "code_22": "Robot stuck",
+          "code_24": "Navigation issue",
+          "code_26": "Vacuum motor stalled",
+          "code_29": "Robot updating",
+          "code_30": "Vacuum motor issue",
+          "code_32": "Cannot reach requested map areas",
+          "code_33": "Robot trapped",
+          "code_35": "Mop missing",
+          "code_36": "Bin full or air duct clogged",
+          "code_42": "Cannot reach room",
+          "code_44": "Robot water-bin pump may be blocked",
+          "code_46": "Battery too low to clean",
+          "code_47": "Required update",
+          "code_48": "Room entrance blocked",
+          "code_66": "Memory storage issue",
+          "code_68": "Obstacle camera issue",
+          "code_69": "Cannot find way home",
+          "code_101": "Charging - battery not detected",
+          "code_102": "Unable to charge",
+          "code_103": "Unable to charge",
+          "code_104": "Charging contacts need cleaning",
+          "code_105": "Charging contacts need cleaning",
+          "code_106": "Battery needs to cool before charging",
+          "code_107": "Battery needs to cool before charging",
+          "code_109": "Unable to charge",
+          "code_110": "Charging - battery replacement needed",
+          "code_111": "Unable to charge",
+          "code_114": "Charging issue",
+          "code_115": "Charging - battery replacement needed",
+          "code_117": "Unable to charge",
+          "code_119": "Charging contacts need cleaning",
+          "code_120": "Unable to charge",
+          "code_121": "Charging contacts need cleaning",
+          "code_1000": "Left side brush stuck",
+          "code_1001": "Right side brush stuck",
+          "code_1008": "Mop lift motor stalled",
+          "code_1010": "Cannot reach dock",
+          "code_1025": "Laser sensor issue",
+          "code_1026": "Mop tangled or stuck",
+          "code_1027": "Clean-water tank missing or low",
+          "code_1028": "Dirty-water tank or wash basin clogged",
+          "code_1029": "Incompatible map",
+          "code_1030": "Robot stuck in no-mop zone",
+          "code_1034": "Pad plate detached",
+          "code_0": "OK",
+          "code_201": "Cannot start - stairs or drop-off detected",
+          "code_202": "Cannot start - robot suspended",
+          "code_207": "Cannot start - bin missing",
+          "code_210": "Cannot start - robot in keep-out zone",
+          "code_215": "Cannot start - battery low",
+          "code_216": "Cannot start - bin full or air duct clogged",
+          "code_218": "Cannot start - robot updating",
+          "code_222": "Cannot start - navigation module issue",
+          "code_224": "Cannot start - map issue",
+          "code_228": "Cannot start - required update",
+          "code_231": "Cannot start - clean-water tank low",
+          "code_234": "Cannot mop - mop missing",
+          "code_237": "Cannot start - battery not detected",
+          "code_238": "Cannot start - battery not detected",
+          "code_239": "Cannot start - saving map",
+          "code_251": "Cannot start - camera issue",
+          "code_266": "Cannot start - subscription issue",
+          "code_268": "Cannot start - saving map",
+          "code_283": "Cannot start - laser sensor issue",
+          "code_284": "Cannot start - incompatible map",
+          "code_285": "Cannot start - draining robot water tank",
+          "code_286": "Robot must be on the floor and ready",
+          "code_287": "Cannot vacuum - remove pad plate",
+          "code_290": "Cannot mop - attach pad plate",
+          "code_350": "Dust bag missing",
+          "code_351": "Dock clogged",
+          "code_352": "Dock sealing issue",
+          "code_353": "Dust bag full",
+          "code_354": "Dock motor failure",
+          "code_360": "Dock communication failure",
+          "code_361": "Dock evacuation report communication failure",
+          "code_362": "Dock lifetime data report communication failure",
+          "code_363": "Dock evacuation and lifetime report communication failure",
+          "code_364": "Evacuation dock detected but not communicating",
+          "code_365": "Too-frequent evacuations",
+          "code_399": "Undefined evacuation error",
+          "code_449": "Invalid dock state for refill",
+          "code_450": "Refill tank missing",
+          "code_451": "Refill tank low",
+          "code_452": "Refill tank level sensor issue",
+          "code_453": "Refill alignment failure",
+          "code_454": "Refill clogged",
+          "code_455": "Refill pump failure",
+          "code_456": "Incorrect robot tank",
+          "code_457": "Refill communication failure",
+          "code_458": "Cannot extend refill snorkel",
+          "code_459": "Cannot retract refill snorkel",
+          "code_460": "Dock tank level not decreasing",
+          "code_461": "Robot tank level not increasing",
+          "code_462": "Refill hardware issue",
+          "code_463": "Dock tank level decreasing unexpectedly",
+          "code_464": "Detergent tank missing or empty",
+          "code_650": "Clean-water tank missing",
+          "code_651": "Clean-water tank low",
+          "code_653": "Dirty-water tank missing",
+          "code_654": "Dirty-water tank full",
+          "code_668": "No pad attached",
+          "code_669": "Pad actuator stalled",
+          "code_670": "Cleaning tray out of position",
+          "code_671": "Clean-water tank empty or missing",
+          "code_672": "Dirty-water tank full or missing",
+          "code_649": "Invalid dock state for pad wash",
+          "code_652": "Clean-water level sensor issue",
+          "code_660": "Pad wash communication failure",
+          "code_661": "Dirty-water tank level not decreasing",
+          "code_662": "Dirty-water tank level not increasing",
+          "code_663": "Clean-water tank level decreasing unexpectedly",
+          "code_664": "Dirty-water tank level decreasing unexpectedly",
+          "code_665": "Pad wash hardware issue",
+          "code_753": "Pad not washed",
+          "code_756": "No pad attached",
+          "code_757": "Dock communication failure",
+          "code_749": "Invalid pad dry state",
+          "code_750": "Pad drying motor stalled",
+          "code_751": "Pad drying motor failed to start",
+          "code_752": "Pad drying actuator stalled",
+          "code_754": "Pad drying motor FET fault",
+          "code_755": "Pad drying hardware issue",
+          "code_500": "Reserved dock error",
+          "code_501": "Dock beacon path blocked",
+          "code_502": "Dock COC communication failure",
+          "code_503": "Dock Bluetooth communication failure",
+          "code_504": "Dock home switch failure",
+          "code_505": "Dock primary internal communication failure",
+          "code_506": "Dock secondary internal communication failure",
+          "code_507": "Dock Bluetooth pairing failure",
+          "code_508": "Dock primary processor update failure",
+          "code_509": "Dock secondary processor update failure",
+          "code_510": "Dock updating",
+          "code_511": "Dirty-water tank level sensor issue",
+          "code_512": "Dirty-water evacuation clogged",
+          "code_513": "Dirty-water pump failure",
+          "code_515": "Dirty-water control valve failure",
+          "code_516": "Wash-tray agitator motor stalled",
+          "code_517": "Wash tray overflowing",
+          "code_518": "Wash-tray agitator missing",
+          "code_519": "Robot not on dock contacts",
+          "code_520": "Dock infrared communication failure"
+        }
+      },
+      "mission_initiator": {
+        "name": "Status - Started by",
+        "state": {
+          "matter": "Matter",
+          "cloud": "Cloud",
+          "manual": "Robot",
+          "rmtapp": "iRobot app",
+          "localapp": "Local app",
+          "schedule": "Schedule",
+          "none": "None",
+          "demand": "Demand clean",
+          "dockbtn": "Dock button",
+          "alexa": "Alexa",
+          "siri": "Siri",
+          "google": "Google",
+          "ifttt": "IFTTT",
+          "iftttc": "IFTTT",
+          "homey": "Homey",
+          "openhab": "openHAB",
+          "yonomi": "Yonomi",
+          "bosch": "Bosch",
+          "swisscom": "Swisscom",
+          "alismart": "AliSmart",
+          "team": "Teamed robot",
+          "rmtauto": "iRobot automation",
+          "loclauto": "Local automation",
+          "simauto": "Simulated automation",
+          "wifi": "Wi-Fi",
+          "shell": "Shell",
+          "internal": "Robot (internal)",
+          "unknown": "Unknown"
+        }
+      },
+      "mission_phase": {
+        "name": "Robot status",
+        "state": {
+          "run": "Cleaning",
+          "charge": "Charging",
+          "stop": "Stopped",
+          "stuck": "Stuck",
+          "evac": "Emptying bin",
+          "padwash": "Washing pads",
+          "paddry": "Drying pads",
+          "refill": "Refilling tank",
+          "pause": "Paused",
+          "hmpostmsn": "Returning after mission",
+          "hmmidmsn": "Returning to recharge",
+          "hmusrdock": "Returning to dock",
+          "hmusrchrg": "Returning to charge",
+          "chargingerror": "Charging error",
+          "mapupd": "Updating map",
+          "chgerr": "Charging error",
+          "new": "New mission",
+          "resume": "Resuming",
+          "recharge": "Recharging",
+          "completed": "Mission completed",
+          "cancelled": "Canceled",
+          "stale": "Not responding",
+          "binfull": "Bin full",
+          "disc": "Discovering",
+          "error": "Error",
+          "explore": "Exploring",
+          "kidnap": "Picked up",
+          "oclean": "Spot cleaning",
+          "plan": "Planning",
+          "polygon": "Cleaning area",
+          "reloc": "Relocating",
+          "room": "Cleaning room",
+          "tankempty": "Tank empty",
+          "travel": "Travelling",
+          "traversal": "Traversing",
+          "zone": "Cleaning zone",
+          "idle": "Idle"
+        }
+      },
+      "mission_started": {
+        "name": "Mission started"
+      },
+      "not_ready_code": {
+        "name": "Status - Readiness",
+        "state": {
+          "code_0": "Ready",
+          "code_201": "Cannot start - stairs or drop-off detected",
+          "code_202": "Cannot start - robot suspended",
+          "code_207": "Cannot start - bin missing",
+          "code_210": "Cannot start - robot in keep-out zone",
+          "code_215": "Cannot start - battery low",
+          "code_216": "Cannot start - bin full or air duct clogged",
+          "code_218": "Cannot start - robot updating",
+          "code_222": "Cannot start - navigation module issue",
+          "code_224": "Cannot start - map issue",
+          "code_228": "Cannot start - required update",
+          "code_231": "Cannot start - clean-water tank low",
+          "code_234": "Cannot mop - mop missing",
+          "code_237": "Cannot start - battery not detected",
+          "code_238": "Cannot start - battery not detected",
+          "code_239": "Cannot start - saving map",
+          "code_251": "Cannot start - camera issue",
+          "code_266": "Cannot start - subscription issue",
+          "code_268": "Cannot start - saving map",
+          "code_283": "Cannot start - laser sensor issue",
+          "code_284": "Cannot start - incompatible map",
+          "code_285": "Cannot start - draining robot water tank",
+          "code_286": "Robot must be on the floor and ready",
+          "code_287": "Cannot vacuum - remove pad plate",
+          "code_290": "Cannot mop - attach pad plate"
+        }
+      },
+      "stats_mission_canceled_count": {
+        "name": "Missions canceled"
+      },
+      "stats_mission_count": {
+        "name": "Missions total"
+      },
+      "stats_mission_failure_count": {
+        "name": "Missions failed"
+      },
+      "stats_mission_success_count": {
+        "name": "Missions successful"
+      }
+    },
+    "binary_sensor": {
+      "bin_present": {
+        "name": "Bin present"
+      },
+      "robot_mqtt_connection": {
+        "name": "Robot MQTT connection"
+      },
+      "tank_present": {
+        "name": "Robot water tank"
+      }
+    },
+    "switch": {
+      "child_lock": {
+        "name": "Child lock"
+      },
+      "eco_charge": {
+        "name": "Eco charging"
+      },
+      "carpet_boost": {
+        "name": "Carpet boost"
+      },
+      "two_pass": {
+        "name": "Two-pass cleaning"
+      },
+      "pad_dry_allowed": {
+        "name": "Pad drying"
+      },
+      "pad_wash_allowed": {
+        "name": "Pad washing allowed"
+      }
+    },
+    "select": {
+      "auto_evac_frequency": {
+        "name": "Auto-empty frequency",
+        "state": {
+          "option_0": "Every routine",
+          "option_1": "Every 2 routines",
+          "option_2": "Every 3 routines",
+          "option_4": "On dock return",
+          "option_10": "10 m2",
+          "option_15": "15 m2",
+          "option_25": "25 m2",
+          "option_30": "30 m2",
+          "option_50": "50 m2"
+        }
+      },
+      "pad_dry_duration": {
+        "name": "Mop dry duration",
+        "state": {
+          "option_2": "2 hours",
+          "option_3": "3 hours",
+          "option_4": "4 hours",
+          "option_5": "5 hours",
+          "option_6": "6 hours"
+        }
+      },
+      "pad_wash_area_interval": {
+        "name": "Mop wash area interval",
+        "state": {
+          "option_6": "6 m2",
+          "option_8": "8 m2",
+          "option_10": "10 m2",
+          "option_15": "15 m2",
+          "option_20": "20 m2"
+        }
+      },
+      "pad_wash_frequency": {
+        "name": "Mop wash frequency",
+        "state": {
+          "option_0": "After each room",
+          "option_1": "By time",
+          "option_2": "By area"
+        }
+      },
+      "pad_wash_time_interval": {
+        "name": "Mop wash time interval",
+        "state": {
+          "option_10": "10 minutes",
+          "option_15": "15 minutes",
+          "option_20": "20 minutes",
+          "option_25": "25 minutes"
+        }
+      },
+      "suction_level": {
+        "name": "Suction level",
+        "state": {
+          "option_2": "Light",
+          "option_3": "Normal",
+          "option_4": "Deep"
+        }
+      },
+      "cleaning_mode": {
+        "name": "Cleaning mode",
+        "state": {
+          "vacuum_and_mop": "Vacuum and mop",
+          "vacuum_only": "Vacuum only",
+          "mop_only": "Mop only"
+        }
+      }
+    },
+    "image": {
+      "live_map": {
+        "name": "Live cleaning map {number}"
+      },
+      "room_map": {
+        "name": "Room map {number}"
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Cannot read telemetry from the local server. Check HTTPS certificate trust, server reachability and emulator version."
+    },
+    "invalid_auth": {
+      "message": "The local server rejected the token. Reauthenticate this integration."
+    },
+    "unavailable": {
+      "message": "The robot MQTT connection or setting is unavailable."
+    },
+    "unsupported_mode": {
+      "message": "The saved cleaning mode is unsupported. Select a supported cleaning mode or open Repairs."
+    },
+    "unsupported_option": {
+      "message": "This setting option is not supported by the robot."
+    },
+    "invalid_segments": {
+      "message": "Select distinct rooms from the current map. Update the vacuum area mappings if needed."
+    },
+    "delivery_failed": {
+      "message": "Delivery failed or is uncertain. Check the robot and MQTT connection before retrying; commands are not replayed."
+    },
+    "invalid_command": {
+      "message": "The command is invalid for the current robot capabilities."
+    },
+    "image_failed": {
+      "message": "Cannot load the map image. Check the local server connection and map availability."
+    }
+  },
+  "issues": {
+    "cleaning_mode": {
+      "title": "Unsupported cleaning mode for {robot}",
+      "description": "The saved cleaning mode is no longer reported as supported. Choose a supported mode. This changes only the local preference and does not start the robot.",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Choose a supported cleaning mode",
+            "description": "Modes: 2 = vacuum only, 4 = mop only, 6 = vacuum and mop. This will not start cleaning.",
+            "data": {
+              "cleaning_mode": "Cleaning mode"
+            }
+          }
+        },
+        "error": {
+          "unsupported_mode": "Select a currently supported mode."
+        },
+        "abort": {
+          "entry_removed": "The integration entry was removed.",
+          "entry_not_loaded": "Load the integration successfully before changing its cleaning mode.",
+          "no_modes": "No cleaning modes are currently reported. Wait for the robot to reconnect."
+        }
+      }
+    }
+  }
+}

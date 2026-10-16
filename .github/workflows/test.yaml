@@ -1,0 +1,30 @@
+name: Tests
+on:
+  push:
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install -r requirements-test.txt
+      - run: python -m ruff check .
+      - run: python -m ruff format --check .
+      - run: python -m mypy
+      - run: python -m pytest --cov-report=xml
+      - run: python -m coverage report --include=custom_components/roomba_local/config_flow.py --fail-under=100
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
