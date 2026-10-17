@@ -20,6 +20,41 @@ This is a custom Home Assistant integration. The emulator runs separately and ha
 
 Available features depend on what your robot reports. Tested hardware: **Roomba 505 / V4**.
 
+<details>
+<summary>Screenshot 1</summary>
+
+<img width="1314" height="857" alt="Image" src="https://github.com/user-attachments/assets/b5c9951d-463b-4310-875d-302e7454b033" />
+
+</details>
+
+<details>
+<summary>Screenshot 2</summary>
+
+<img width="538" height="579" alt="Image" src="https://github.com/user-attachments/assets/0898fe55-1ca5-4e7e-b5e9-b50cde5c832b" />
+
+</details>
+
+<details>
+<summary>Screenshot 3</summary>
+
+<img width="1013" height="884" alt="Image" src="https://github.com/user-attachments/assets/517aba52-1617-4d00-8866-8ee7686b2bb9" />
+
+</details>
+
+<details>
+<summary>Screenshot 4</summary>
+
+<img width="605" height="887" alt="Image" src="https://github.com/user-attachments/assets/295c3bc6-657c-4628-90a9-6996d6f13f3f" />
+
+</details>
+
+<details>
+<summary>Screenshot 5</summary>
+
+<img width="522" height="938" alt="Image" src="https://github.com/user-attachments/assets/434ea525-33bc-4b2b-aab0-d725f41a5d91" />
+
+</details>   
+
 ## Requirements
 
 - **Home Assistant 2026.10 or newer**.
