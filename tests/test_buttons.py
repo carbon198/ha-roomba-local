@@ -12,7 +12,12 @@ from .test_entities import entity, entity_id
 
 @pytest.mark.parametrize(
     ("key", "command"),
-    [("evacuate_bin", "evac"), ("start_pad_drying", "drypad"), ("stop_pad_drying", "stoppaddry")],
+    [
+        ("evacuate_bin", "evac"),
+        ("start_pad_drying", "drypad"),
+        ("stop_pad_drying", "stoppaddry"),
+        ("wash_mop_pad", "washpad"),
+    ],
 )
 async def test_dock_button_press(hass, setup_entry, key, command):
     button = entity(hass, entity_id(hass, setup_entry, "button", key))

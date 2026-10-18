@@ -18,7 +18,7 @@ async def client(hass, aioclient_mock):
     return LocalAPI(async_get_clientsession(hass), URL, TOKEN, ROBOT)
 
 
-@pytest.mark.parametrize("command", ["evac", "drypad", "stoppaddry"])
+@pytest.mark.parametrize("command", ["evac", "drypad", "stoppaddry", "washpad"])
 async def test_dock_commands(client, aioclient_mock, command):
     aioclient_mock.post(
         URL + f"/v1/customer/robots/{ROBOT}/commands/{command}",

@@ -92,6 +92,7 @@ class LocalAPI:
             "evac",
             "drypad",
             "stoppaddry",
+            "washpad",
         }:
             raise ValueError("Unsupported robot command")
         if command == "clean_segments":

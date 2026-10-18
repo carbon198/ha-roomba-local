@@ -20,6 +20,7 @@ COMMANDS = {
     "evacuate_bin": ("evac", "mdi:delete-empty"),
     "start_pad_drying": ("drypad", "mdi:weather-sunny"),
     "stop_pad_drying": ("stoppaddry", "mdi:stop"),
+    "wash_mop_pad": ("washpad", "mdi:water"),
 }
 
 
