@@ -81,7 +81,18 @@ class LocalAPI:
     async def command(
         self, command: str, segment_ids: list[str] | None = None, operating_mode: int | None = None
     ) -> None:
-        if command not in {"find", "start", "pause", "stop", "dock", "clean_segments", "live_map"}:
+        if command not in {
+            "find",
+            "start",
+            "pause",
+            "stop",
+            "dock",
+            "clean_segments",
+            "live_map",
+            "evac",
+            "drypad",
+            "stoppaddry",
+        }:
             raise ValueError("Unsupported robot command")
         if command == "clean_segments":
             if (

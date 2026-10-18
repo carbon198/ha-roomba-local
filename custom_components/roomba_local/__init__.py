@@ -13,6 +13,7 @@ from .coordinator import LocalCoordinator
 from .presentation import retired_unique_ids
 
 PLATFORMS = [
+    Platform.BUTTON,
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
     Platform.VACUUM,
