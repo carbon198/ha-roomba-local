@@ -18,6 +18,16 @@ async def client(hass, aioclient_mock):
     return LocalAPI(async_get_clientsession(hass), URL, TOKEN, ROBOT)
 
 
+@pytest.mark.parametrize("command", ["evac", "drypad", "stoppaddry"])
+async def test_dock_commands(client, aioclient_mock, command):
+    aioclient_mock.post(
+        URL + f"/v1/customer/robots/{ROBOT}/commands/{command}",
+        json={"delivery": "acknowledged", "execution": "unconfirmed"},
+    )
+    await client.command(command)
+    assert aioclient_mock.call_count == 1
+
+
 async def test_inventory(hass, aioclient_mock):
     session = async_get_clientsession(hass)
     aioclient_mock.get(

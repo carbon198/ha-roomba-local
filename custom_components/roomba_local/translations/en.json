@@ -47,6 +47,11 @@
     }
   },
   "entity": {
+    "button": {
+      "evacuate_bin": {"name": "Empty dust bin"},
+      "start_pad_drying": {"name": "Start pad drying"},
+      "stop_pad_drying": {"name": "Stop pad drying"}
+    },
     "sensor": {
       "battery": {
         "name": "Battery"
@@ -689,6 +694,9 @@
     }
   },
   "exceptions": {
+    "dock_required": {
+      "message": "The robot must be online and docked with no active or paused mission."
+    },
     "cannot_connect": {
       "message": "Cannot read telemetry from the local server. Check HTTPS certificate trust, server reachability and emulator version."
     },
