@@ -50,7 +50,8 @@
     "button": {
       "evacuate_bin": {"name": "Empty dust bin"},
       "start_pad_drying": {"name": "Start pad drying"},
-      "stop_pad_drying": {"name": "Stop pad drying"}
+      "stop_pad_drying": {"name": "Stop pad drying"},
+      "wash_mop_pad": {"name": "Wash mop pads"}
     },
     "sensor": {
       "battery": {
