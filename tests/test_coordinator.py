@@ -17,8 +17,135 @@ from custom_components.roomba_local.models import Telemetry
 from custom_components.roomba_local import async_unload_entry
 
 from .conftest import ROBOT
+from .test_entities import entity_id
 
 START = LocalCoordinator.async_start
+
+
+def offline_snapshot(data):
+    return replace(
+        data,
+        online=False,
+        values=data.values | {"robot_mqtt_connection": False},
+    )
+
+
+async def test_short_mqtt_disconnect_preserves_sensors_and_recovers(hass, setup_entry):
+    coordinator = setup_entry.runtime_data
+    original = coordinator.data
+    offline = replace(
+        offline_snapshot(original),
+        values={"robot_mqtt_connection": False},
+        available={key: key == "robot_mqtt_connection" for key in original.available},
+    )
+    with patch.object(hass.loop, "call_later") as timer:
+        coordinator.async_set_updated_data(coordinator._async_debounce_disconnect(offline))
+    timer.assert_called_once_with(10, coordinator._async_confirm_disconnect)
+    assert coordinator.data.online
+    assert coordinator.data.values["robot_mqtt_connection"] is True
+    assert coordinator.data.values["battery"] == original.values["battery"]
+    assert coordinator.data.available["battery"]
+    coordinator.async_set_updated_data(coordinator._async_debounce_disconnect(original))
+    timer.return_value.cancel.assert_called_once()
+    assert coordinator.data.online
+    assert coordinator._pending_offline is None
+
+
+async def test_long_mqtt_disconnect_uses_latest_snapshot_without_extending_deadline(
+    hass, setup_entry
+):
+    coordinator = setup_entry.runtime_data
+    offline = offline_snapshot(coordinator.data)
+    with patch.object(hass.loop, "call_later") as timer:
+        coordinator.async_set_updated_data(coordinator._async_debounce_disconnect(offline))
+        updated = replace(offline, values=offline.values | {"battery": 23})
+        coordinator.async_set_updated_data(coordinator._async_debounce_disconnect(updated))
+    timer.assert_called_once()
+    timer.call_args.args[1]()
+    assert not coordinator.data.online
+    assert coordinator.data.values["robot_mqtt_connection"] is False
+    assert coordinator.data.values["battery"] == 23
+    with patch.object(hass.loop, "call_later") as timer:
+        assert coordinator._async_debounce_disconnect(offline) is offline
+    timer.assert_not_called()
+    online = replace(offline, online=True, values=offline.values | {"robot_mqtt_connection": True})
+    coordinator.async_set_updated_data(coordinator._async_debounce_disconnect(online))
+    with patch.object(hass.loop, "call_later") as timer:
+        coordinator.async_set_updated_data(coordinator._async_debounce_disconnect(offline))
+    timer.assert_called_once()
+    await coordinator.async_shutdown()
+    timer.return_value.cancel.assert_called_once()
+
+
+async def test_initially_offline_robot_has_no_grace(hass, setup_entry):
+    coordinator = setup_entry.runtime_data
+    offline = offline_snapshot(coordinator.data)
+    coordinator.async_set_updated_data(offline)
+    with patch.object(hass.loop, "call_later") as timer:
+        assert coordinator._async_debounce_disconnect(offline) is offline
+    timer.assert_not_called()
+
+
+async def test_refresh_applies_disconnect_grace(hass, setup_entry, api):
+    coordinator = setup_entry.runtime_data
+    api["telemetry"].side_effect = None
+    api["telemetry"].return_value = offline_snapshot(coordinator.data)
+    with patch.object(hass.loop, "call_later") as timer:
+        data = await coordinator._async_update_data()
+    assert data.online
+    assert data.values["robot_mqtt_connection"] is True
+    await coordinator.async_shutdown()
+    timer.return_value.cancel.assert_called_once()
+
+
+async def test_disconnect_changes_ha_state_only_after_ten_seconds(hass, setup_entry):
+    coordinator = setup_entry.runtime_data
+    connection = entity_id(hass, setup_entry, "binary_sensor", "robot_mqtt_connection")
+    coordinator.async_set_updated_data(
+        coordinator._async_debounce_disconnect(offline_snapshot(coordinator.data))
+    )
+    await asyncio.sleep(9)
+    assert hass.states.get(connection).state == "on"
+    assert coordinator.data.online
+    await asyncio.sleep(1.1)
+    await hass.async_block_till_done()
+    assert hass.states.get(connection).state == "off"
+    assert not coordinator.data.online
+
+
+async def test_stream_applies_and_cancels_disconnect_grace(hass, setup_entry):
+    coordinator = setup_entry.runtime_data
+    online = coordinator.data
+
+    async def stream():
+        yield offline_snapshot(online)
+        assert coordinator.data.online
+        assert coordinator.data.values["robot_mqtt_connection"] is True
+        yield online
+        assert coordinator._pending_offline is None
+        raise InvalidAuth()
+
+    with (
+        patch.object(coordinator.api, "events", stream),
+        patch.object(hass.loop, "call_later") as timer,
+    ):
+        await coordinator._async_listen()
+    timer.return_value.cancel.assert_called_once()
+    assert not coordinator.last_update_success
+
+
+@pytest.mark.parametrize("failure", [CannotConnect(), InvalidAuth()])
+async def test_api_failure_cancels_pending_disconnect(hass, setup_entry, api, failure):
+    coordinator = setup_entry.runtime_data
+    with patch.object(hass.loop, "call_later") as timer:
+        coordinator.async_set_updated_data(
+            coordinator._async_debounce_disconnect(offline_snapshot(coordinator.data))
+        )
+    api["telemetry"].side_effect = failure
+    with pytest.raises((UpdateFailed, ConfigEntryAuthFailed)):
+        await coordinator._async_update_data()
+    timer.return_value.cancel.assert_called_once()
+    assert coordinator._pending_offline is None
 
 
 @pytest.mark.parametrize(
