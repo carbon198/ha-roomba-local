@@ -1,6 +1,7 @@
 import asyncio
 from asyncio import sleep
 from contextlib import suppress
+from dataclasses import replace
 import logging
 import time
 
@@ -30,6 +31,59 @@ class LocalCoordinator(DataUpdateCoordinator[Telemetry]):
         self._stream_task: asyncio.Task[None] | None = None
         self._position_task: asyncio.Task[None] | None = None
         self._position_failed = False
+        self._disconnect_timer: asyncio.TimerHandle | None = None
+        self._pending_offline: Telemetry | None = None
+        self._offline_confirmed = False
+
+    @callback
+    def _async_cancel_disconnect(self) -> None:
+        if self._disconnect_timer is not None:
+            self._disconnect_timer.cancel()
+            self._disconnect_timer = None
+        self._pending_offline = None
+
+    @callback
+    def _async_confirm_disconnect(self) -> None:
+        data = self._pending_offline
+        self._disconnect_timer = None
+        self._pending_offline = None
+        self._offline_confirmed = True
+        if data is not None:
+            self.async_set_updated_data(data)
+
+    @callback
+    def _async_debounce_disconnect(self, data: Telemetry) -> Telemetry:
+        """Hold established MQTT connectivity for ten seconds, not API failures.
+
+        Keep the last reported sensor values available during a brief reconnect.
+        The emulator still authoritatively rejects commands without a live session.
+        Repeated offline reports update the pending snapshot, not the deadline.
+        """
+        if data.online:
+            self._async_cancel_disconnect()
+            self._offline_confirmed = False
+        elif (
+            not self._offline_confirmed
+            and self.last_update_success
+            and self.data is not None
+            and self.data.online
+        ):
+            self._pending_offline = data
+            if self._disconnect_timer is None:
+                self._disconnect_timer = self.hass.loop.call_later(
+                    10, self._async_confirm_disconnect
+                )
+            return replace(
+                data,
+                online=True,
+                values=self.data.values | data.values | {"robot_mqtt_connection": True},
+                available=self.data.available
+                | {
+                    key: value or self.data.available.get(key, False)
+                    for key, value in data.available.items()
+                },
+            )
+        return data
 
     @property
     def stream_running(self) -> bool:
@@ -71,6 +125,7 @@ class LocalCoordinator(DataUpdateCoordinator[Telemetry]):
             )
 
     async def async_shutdown(self) -> None:
+        self._async_cancel_disconnect()
         if self._position_task is not None:
             self._position_task.cancel()
             with suppress(asyncio.CancelledError):
@@ -137,15 +192,17 @@ class LocalCoordinator(DataUpdateCoordinator[Telemetry]):
             try:
                 async for data in self.api.events():
                     self._async_metadata(data)
-                    self.async_set_updated_data(data)
+                    self.async_set_updated_data(self._async_debounce_disconnect(data))
                     delay = 1
             except InvalidAuth:
+                self._async_cancel_disconnect()
                 self.async_set_update_error(
                     ConfigEntryAuthFailed(translation_domain=DOMAIN, translation_key="invalid_auth")
                 )
                 self.config_entry.async_start_reauth(self.hass)
                 return
             except CannotConnect:
+                self._async_cancel_disconnect()
                 self.async_set_update_error(
                     UpdateFailed(translation_domain=DOMAIN, translation_key="cannot_connect")
                 )
@@ -156,10 +213,12 @@ class LocalCoordinator(DataUpdateCoordinator[Telemetry]):
         try:
             data = await self.api.telemetry()
             self._async_metadata(data)
-            return data
+            return self._async_debounce_disconnect(data)
         except InvalidAuth as exc:
+            self._async_cancel_disconnect()
             raise ConfigEntryAuthFailed(
                 translation_domain=DOMAIN, translation_key="invalid_auth"
             ) from exc
         except CannotConnect as exc:
+            self._async_cancel_disconnect()
             raise UpdateFailed(translation_domain=DOMAIN, translation_key="cannot_connect") from exc
