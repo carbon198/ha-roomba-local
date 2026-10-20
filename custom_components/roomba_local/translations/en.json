@@ -297,6 +297,9 @@
       "last_data_received": {
         "name": "Last data received"
       },
+      "acme_dns_challenge": {
+        "name": "ACME DNS challenge"
+      },
       "localized_map": {
         "name": "Localized map"
       },

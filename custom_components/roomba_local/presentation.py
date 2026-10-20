@@ -399,6 +399,7 @@ TRANSLATED_FIELDS = (
     SCREENSHOT_DIAGNOSTICS
     | MAIN_SENSORS
     | {
+        "acme_dns_challenge",
         "cleaning_mode",
         "child_lock",
         "carpet_boost",

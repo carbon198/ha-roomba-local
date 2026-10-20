@@ -51,6 +51,12 @@ class DeviceMetadata(TypedDict, total=False):
     sw_version: str
 
 
+class DNSChallenge(TypedDict):
+    name: str
+    type: str
+    value: str
+
+
 def normalize_url(value: str) -> str:
     url = urlsplit(value.strip())
     if (
@@ -97,6 +103,7 @@ class Telemetry:
     map_overlays: list[MapOverlay] = dataclass_field(default_factory=list)
     map_inventory: list[str] | None = None
     device: DeviceMetadata = dataclass_field(default_factory=DeviceMetadata)
+    acme_dns_challenge: DNSChallenge | None = None
 
     @classmethod
     def parse(cls, data: Any, robot_id: str) -> Telemetry:
@@ -342,6 +349,20 @@ class Telemetry:
             )
         ):
             raise ValueError("Invalid device metadata")
+        challenge = data.get("acme_dns_challenge")
+        if challenge is not None and (
+            not isinstance(challenge, dict)
+            or set(challenge) != {"name", "type", "value"}
+            or challenge["type"] != "TXT"
+            or not isinstance(challenge["name"], str)
+            or len(challenge["name"]) > 269
+            or not re.fullmatch(
+                r"_acme-challenge\.[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?", challenge["name"]
+            )
+            or not isinstance(challenge["value"], str)
+            or not re.fullmatch(r"[A-Za-z0-9_-]{43}", challenge["value"])
+        ):
+            raise ValueError("Invalid ACME DNS challenge")
         return cls(
             robot_id,
             data["online"],
@@ -359,4 +380,5 @@ class Telemetry:
             cast(list[MapOverlay], overlays),
             inventory,
             cast(DeviceMetadata, device),
+            cast(DNSChallenge | None, challenge),
         )
