@@ -90,6 +90,49 @@ async def test_availability_and_recovery(hass, setup_entry, document):
     assert hass.states.get(ids[0]).state == "unavailable"
 
 
+async def test_acme_challenge_sensor(hass, setup_entry, document):
+    entry = setup_entry
+    coordinator = entry.runtime_data
+    identifier = entity_id(hass, entry, "sensor", "acme_dns_challenge")
+    registry_entry = er.async_get(hass).async_get(identifier)
+    assert registry_entry.entity_category.value == "diagnostic"
+    assert hass.states.get(identifier).state == "unknown"
+    assert hass.states.get(identifier).attributes["friendly_name"] == (
+        "Roomba downstairs ACME DNS challenge"
+    )
+    for value in ("a" * 43, "b" * 43):
+        coordinator.async_set_updated_data(
+            Telemetry.parse(
+                document
+                | {
+                    "online": False,
+                    "acme_dns_challenge": {
+                        "name": "_acme-challenge.roomba.example.com",
+                        "type": "TXT",
+                        "value": value,
+                    },
+                },
+                ROBOT,
+            )
+        )
+        await hass.async_block_till_done()
+        state = hass.states.get(identifier)
+        assert state.state == value
+        assert state.attributes["name"] == "_acme-challenge.roomba.example.com"
+        assert state.attributes["type"] == "TXT"
+    coordinator.async_set_update_error(UpdateFailed("disconnected"))
+    await hass.async_block_till_done()
+    assert hass.states.get(identifier).state == "unavailable"
+    coordinator.async_set_updated_data(
+        Telemetry.parse(document | {"acme_dns_challenge": None}, ROBOT)
+    )
+    await hass.async_block_till_done()
+    state = hass.states.get(identifier)
+    assert state.state == "unknown"
+    assert "name" not in state.attributes
+    assert "type" not in state.attributes
+
+
 @pytest.mark.parametrize(
     ("phase", "cycle", "expected"),
     [

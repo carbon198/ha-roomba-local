@@ -25,10 +25,40 @@ async def async_setup_entry(
 ) -> None:
     coordinator = entry.runtime_data
     async_add_entities(
-        LocalSensor(coordinator, field)
-        for field in coordinator.data.fields
-        if field["kind"] == "sensor" and expose_field(field)
+        [
+            LocalSensor(coordinator, field)
+            for field in coordinator.data.fields
+            if field["kind"] == "sensor" and expose_field(field)
+        ]
+        + [ACMEDNSChallengeSensor(coordinator)]
     )
+
+
+class ACMEDNSChallengeSensor(LocalEntity, SensorEntity):
+    def __init__(self, coordinator: LocalCoordinator) -> None:
+        super().__init__(
+            coordinator,
+            {
+                "key": "acme_dns_challenge",
+                "name": "ACME DNS challenge",
+                "entity_category": "diagnostic",
+            },
+        )
+        self._attr_icon = "mdi:certificate-outline"
+
+    @property
+    def available(self) -> bool:
+        return self.coordinator.last_update_success
+
+    @property
+    def native_value(self) -> str | None:
+        challenge = self.coordinator.data.acme_dns_challenge
+        return challenge["value"] if challenge is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        challenge = self.coordinator.data.acme_dns_challenge
+        return {"name": challenge["name"], "type": challenge["type"]} if challenge else {}
 
 
 class LocalSensor(LocalEntity, SensorEntity):

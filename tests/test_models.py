@@ -41,6 +41,7 @@ def test_credentials_and_older_server(document):
     data = Telemetry.parse(minimal, ROBOT)
     assert data.device == {}
     assert data.position is None
+    assert data.acme_dns_challenge is None
     assert data.map_inventory is None
     assert not data.segment_catalog_complete
 
@@ -91,6 +92,25 @@ def test_invalid_document_fields(document, key, bad):
     document[key] = bad
     with pytest.raises(ValueError):
         Telemetry.parse(document, ROBOT)
+
+
+@pytest.mark.parametrize(
+    "challenge",
+    [
+        [],
+        {},
+        {"name": "bad", "type": "TXT", "value": "a" * 43},
+        {"name": 1, "type": "TXT", "value": "a" * 43},
+        {"name": "_acme-challenge." + "a" * 256, "type": "TXT", "value": "a" * 43},
+        {"name": "_acme-challenge.example.com", "type": "A", "value": "a" * 43},
+        {"name": "_acme-challenge.example.com", "type": "TXT", "value": 1},
+        {"name": "_acme-challenge.example.com", "type": "TXT", "value": "short"},
+        {"name": "_acme-challenge.example.com", "type": "TXT", "value": "a" * 42 + "\n"},
+    ],
+)
+def test_invalid_acme_challenge(document, challenge):
+    with pytest.raises(ValueError, match="Invalid ACME DNS challenge"):
+        Telemetry.parse(document | {"acme_dns_challenge": challenge}, ROBOT)
 
 
 @pytest.mark.parametrize(
