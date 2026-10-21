@@ -9,7 +9,7 @@ from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.roomba_local.api import CannotConnect, InvalidAuth
-from custom_components.roomba_local.const import DOMAIN
+from custom_components.roomba_local.const import CONF_ALLOW_INVALID_CERTIFICATE, DOMAIN
 from custom_components.roomba_local.config_flow import LocalConfigFlow, robot_identity
 
 from .conftest import ROBOT, TOKEN, URL
@@ -25,7 +25,12 @@ async def test_user_flow(hass, api):
     ):
         result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"api_url": URL + "/", "bearer_token": TOKEN}
+            result["flow_id"],
+            {
+                "api_url": URL + "/",
+                "bearer_token": TOKEN,
+                CONF_ALLOW_INVALID_CERTIFICATE: True,
+            },
         )
         assert result["step_id"] == "robot"
         with pytest.raises(InvalidData):
@@ -38,7 +43,40 @@ async def test_user_flow(hass, api):
         assert result["type"] is FlowResultType.CREATE_ENTRY
         assert result["result"].unique_id == robot_identity(URL, ROBOT)
         assert result["data"]["api_url"] == URL
+        assert result["data"][CONF_ALLOW_INVALID_CERTIFICATE] is True
         await hass.async_block_till_done()
+
+
+async def test_certificate_option_flow_preserves_existing_options(hass, entry):
+    hass.config_entries.async_update_entry(entry, options={"cleaning_mode": 6})
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+    assert result["data_schema"]({}) == {CONF_ALLOW_INVALID_CERTIFICATE: False}
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_ALLOW_INVALID_CERTIFICATE: True}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options == {
+        "cleaning_mode": 6,
+        CONF_ALLOW_INVALID_CERTIFICATE: True,
+    }
+
+
+async def test_existing_entry_defaults_to_verified_certificate(hass, entry):
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["data_schema"]({}) == {CONF_ALLOW_INVALID_CERTIFICATE: False}
+
+
+async def test_certificate_option_reloads_api_client(hass, setup_entry):
+    entry = setup_entry
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_ALLOW_INVALID_CERTIFICATE: True}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert entry.runtime_data.api.allow_invalid_certificate is True
 
 
 @pytest.mark.parametrize(

@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from unittest.mock import patch
 
 import aiohttp
 import pytest
@@ -37,6 +38,26 @@ async def test_inventory(hass, aioclient_mock):
     robots = await LocalAPI.robots(session, URL, TOKEN)
     assert robots[0]["robot_id"] == ROBOT
     assert aioclient_mock.mock_calls[0][3]["Authorization"] == f"Bearer {TOKEN}"
+
+
+async def test_invalid_certificate_is_only_allowed_when_requested(hass, aioclient_mock, document):
+    session = async_get_clientsession(hass)
+    inventory_url = URL + "/v1/customer/robots"
+    aioclient_mock.get(inventory_url, json={"robots": [{"robot_id": ROBOT}]})
+    with patch.object(session, "get", wraps=session.get) as request:
+        await LocalAPI.robots(session, URL, TOKEN)
+        assert request.call_args.kwargs["ssl"] is True
+
+    aioclient_mock.get(inventory_url, json={"robots": [{"robot_id": ROBOT}]})
+    with patch.object(session, "get", wraps=session.get) as request:
+        await LocalAPI.robots(session, URL, TOKEN, allow_invalid_certificate=True)
+        assert request.call_args.kwargs["ssl"] is False
+
+    client = LocalAPI(session, URL, TOKEN, ROBOT, allow_invalid_certificate=True)
+    aioclient_mock.get(f"{URL}/v1/customer/robots/{ROBOT}/telemetry", json=document)
+    with patch.object(session, "get", wraps=session.get) as request:
+        await client.telemetry()
+        assert request.call_args.kwargs["ssl"] is False
 
 
 @pytest.mark.parametrize(

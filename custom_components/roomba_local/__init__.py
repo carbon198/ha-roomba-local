@@ -8,7 +8,12 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 
 from .api import LocalAPI
-from .const import CONF_API_URL, CONF_BEARER_TOKEN, CONF_ROBOT_ID
+from .const import (
+    CONF_ALLOW_INVALID_CERTIFICATE,
+    CONF_API_URL,
+    CONF_BEARER_TOKEN,
+    CONF_ROBOT_ID,
+)
 from .coordinator import LocalCoordinator
 from .presentation import retired_unique_ids
 
@@ -30,10 +35,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: LocalConfigEntry) -> boo
         entry.data[CONF_API_URL],
         entry.data[CONF_BEARER_TOKEN],
         entry.data[CONF_ROBOT_ID],
+        entry.options.get(
+            CONF_ALLOW_INVALID_CERTIFICATE,
+            entry.data.get(CONF_ALLOW_INVALID_CERTIFICATE, False),
+        )
+        is True,
     )
     coordinator = LocalCoordinator(hass, entry, api)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
+    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     assert entry.unique_id is not None
     registry = er.async_get(hass)
     obsolete = retired_unique_ids(entry.unique_id, coordinator.data.fields)
@@ -50,6 +61,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: LocalConfigEntry) -> boo
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     coordinator.async_start()
     return True
+
+
+async def _async_options_updated(hass: HomeAssistant, entry: LocalConfigEntry) -> None:
+    allow_invalid_certificate = (
+        entry.options.get(
+            CONF_ALLOW_INVALID_CERTIFICATE,
+            entry.data.get(CONF_ALLOW_INVALID_CERTIFICATE, False),
+        )
+        is True
+    )
+    if entry.runtime_data.api.allow_invalid_certificate != allow_invalid_certificate:
+        await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: LocalConfigEntry) -> bool:

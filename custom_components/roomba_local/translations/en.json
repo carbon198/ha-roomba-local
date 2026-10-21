@@ -7,6 +7,7 @@
         "description": "Connect one robot per integration entry. Telemetry, maps and supported controls come from your local emulator. Enter the token value without the Bearer prefix.",
         "data": {
           "api_url": "HTTPS server URL",
+          "allow_invalid_certificate": "Accept invalid TLS certificate (insecure)",
           "bearer_token": "Bearer token"
         }
       },
@@ -44,6 +45,17 @@
       "already_configured": "This robot on this server is already configured.",
       "reauth_successful": "Token updated successfully.",
       "reconfigure_successful": "Server settings updated successfully."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Connection security",
+        "description": "Disabling certificate validation exposes your bearer token and traffic to interception. Use only on a trusted network; installing the correct CA certificate is safer.",
+        "data": {
+          "allow_invalid_certificate": "Accept invalid TLS certificate (insecure)"
+        }
+      }
     }
   },
   "entity": {
