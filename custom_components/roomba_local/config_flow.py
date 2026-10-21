@@ -4,12 +4,19 @@ from typing import Any
 import probatio as vol
 
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigFlowResult as FlowResult
+from homeassistant.config_entries import ConfigFlowResult as FlowResult, OptionsFlow
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import selector
+from homeassistant.core import callback
 
 from .api import CannotConnect, InvalidAuth, LocalAPI
-from .const import CONF_API_URL, CONF_BEARER_TOKEN, CONF_ROBOT_ID, DOMAIN
+from .const import (
+    CONF_ALLOW_INVALID_CERTIFICATE,
+    CONF_API_URL,
+    CONF_BEARER_TOKEN,
+    CONF_ROBOT_ID,
+    DOMAIN,
+)
 from .models import normalize_url, validate_credentials, validate_token
 
 
@@ -29,9 +36,12 @@ class LocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         super().__init__()
         self._server_data: dict[str, str] | None = None
+        self._allow_invalid_certificate = False
         self._robots: dict[str, str] = {}
 
-    async def _validate(self, data: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+    async def _validate(
+        self, data: dict[str, Any], allow_invalid_certificate: bool = False
+    ) -> tuple[dict[str, Any] | None, str | None]:
         try:
             data = dict(data)
             data[CONF_API_URL] = normalize_url(data[CONF_API_URL])
@@ -41,6 +51,7 @@ class LocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data[CONF_API_URL],
                 data[CONF_BEARER_TOKEN],
                 data[CONF_ROBOT_ID],
+                allow_invalid_certificate,
             )
             await api.telemetry()
             return data, None
@@ -57,10 +68,22 @@ class LocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 url = normalize_url(user_input[CONF_API_URL])
                 token = user_input[CONF_BEARER_TOKEN]
+                allow_invalid_certificate = user_input.get(CONF_ALLOW_INVALID_CERTIFICATE, False)
+                if type(allow_invalid_certificate) is not bool:
+                    raise ValueError("Invalid certificate option")
                 validate_token(token)
-                robots = await LocalAPI.robots(async_get_clientsession(self.hass), url, token)
+                robots = await LocalAPI.robots(
+                    async_get_clientsession(self.hass),
+                    url,
+                    token,
+                    allow_invalid_certificate,
+                )
                 if robots:
-                    self._server_data = {CONF_API_URL: url, CONF_BEARER_TOKEN: token}
+                    self._server_data = {
+                        CONF_API_URL: url,
+                        CONF_BEARER_TOKEN: token,
+                    }
+                    self._allow_invalid_certificate = allow_invalid_certificate
                     self._robots = {
                         robot["robot_id"]: " - ".join(
                             [
@@ -85,6 +108,7 @@ class LocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_API_URL): str,
                     vol.Required(CONF_BEARER_TOKEN): token_selector(),
+                    vol.Optional(CONF_ALLOW_INVALID_CERTIFICATE, default=False): bool,
                 }
             ),
         )
@@ -113,7 +137,14 @@ class LocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     robot_identity(self._server_data[CONF_API_URL], robot_id)
                 )
                 self._abort_if_unique_id_configured()
-                data, error = await self._validate({**self._server_data, CONF_ROBOT_ID: robot_id})
+                data, error = await self._validate(
+                    {
+                        **self._server_data,
+                        CONF_ROBOT_ID: robot_id,
+                        CONF_ALLOW_INVALID_CERTIFICATE: self._allow_invalid_certificate,
+                    },
+                    self._allow_invalid_certificate,
+                )
                 if error is None:
                     assert data is not None
                     return self.async_create_entry(title="Roomba " + robot_id[-6:], data=data)
@@ -145,7 +176,10 @@ class LocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         errors = {}
         if user_input is not None:
-            data, error = await self._validate({**entry.data, **user_input})
+            data, error = await self._validate(
+                {**entry.data, **user_input},
+                _allow_invalid_certificate(entry),
+            )
             if error is None:
                 assert data is not None
                 for configured in self._async_current_entries():
@@ -170,6 +204,42 @@ class LocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         else {}
                     ),
                     vol.Required(CONF_BEARER_TOKEN): token_selector(),
+                }
+            ),
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: config_entries.ConfigEntry) -> OptionsFlow:
+        return LocalOptionsFlow()
+
+
+def _allow_invalid_certificate(entry: config_entries.ConfigEntry) -> bool:
+    return (
+        entry.options.get(
+            CONF_ALLOW_INVALID_CERTIFICATE,
+            entry.data.get(CONF_ALLOW_INVALID_CERTIFICATE, False),
+        )
+        is True
+    )
+
+
+class LocalOptionsFlow(OptionsFlow):
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        if user_input is not None:
+            options = {
+                **self.config_entry.options,
+                CONF_ALLOW_INVALID_CERTIFICATE: user_input[CONF_ALLOW_INVALID_CERTIFICATE],
+            }
+            return self.async_create_entry(title="", data=options)
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_ALLOW_INVALID_CERTIFICATE,
+                        default=_allow_invalid_certificate(self.config_entry),
+                    ): bool,
                 }
             ),
         )

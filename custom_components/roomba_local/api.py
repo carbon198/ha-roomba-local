@@ -21,7 +21,12 @@ class CannotConnect(Exception):
 
 class LocalAPI:
     @staticmethod
-    async def robots(session: aiohttp.ClientSession, url: str, token: str) -> list[dict[str, str]]:
+    async def robots(
+        session: aiohttp.ClientSession,
+        url: str,
+        token: str,
+        allow_invalid_certificate: bool = False,
+    ) -> list[dict[str, str]]:
         url = normalize_url(url)
         validate_token(token)
         try:
@@ -30,6 +35,7 @@ class LocalAPI:
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=aiohttp.ClientTimeout(total=10),
                 allow_redirects=False,
+                ssl=not allow_invalid_certificate,
             ) as response:
                 if response.status == 401:
                     raise InvalidAuth("Local bearer token rejected")
@@ -62,12 +68,24 @@ class LocalAPI:
                 "Cannot read robot inventory; check HTTPS and emulator version"
             ) from exc
 
-    def __init__(self, session: aiohttp.ClientSession, url: str, token: str, robot_id: str):
+    def __init__(
+        self,
+        session: aiohttp.ClientSession,
+        url: str,
+        token: str,
+        robot_id: str,
+        allow_invalid_certificate: bool = False,
+    ):
         self.url = normalize_url(url)
         validate_credentials(token, robot_id)
         self.robot_id = robot_id
         self._session = session
         self._token = token
+        self._allow_invalid_certificate = allow_invalid_certificate
+
+    @property
+    def allow_invalid_certificate(self) -> bool:
+        return self._allow_invalid_certificate
 
     async def set_setting(self, key: str, value: bool | int) -> None:
         if (
@@ -124,6 +142,7 @@ class LocalAPI:
                 json=body,
                 timeout=aiohttp.ClientTimeout(total=10),
                 allow_redirects=False,
+                ssl=not self._allow_invalid_certificate,
             ) as response:
                 if response.status == 401:
                     raise InvalidAuth("Bearer token rejected")
@@ -148,6 +167,7 @@ class LocalAPI:
                 headers={"Authorization": f"Bearer {self._token}"},
                 timeout=aiohttp.ClientTimeout(total=10),
                 allow_redirects=False,
+                ssl=not self._allow_invalid_certificate,
             ) as response:
                 if response.status == 401:
                     raise InvalidAuth("Bearer token rejected")
@@ -179,6 +199,7 @@ class LocalAPI:
                 headers={"Authorization": f"Bearer {self._token}"},
                 timeout=aiohttp.ClientTimeout(total=30),
                 allow_redirects=False,
+                ssl=not self._allow_invalid_certificate,
             ) as response:
                 if response.status == 401:
                     raise InvalidAuth("Local bearer token rejected")
@@ -203,6 +224,7 @@ class LocalAPI:
                 timeout=aiohttp.ClientTimeout(total=None, sock_connect=10, sock_read=45),
                 allow_redirects=False,
                 read_bufsize=256 * 1024,
+                ssl=not self._allow_invalid_certificate,
             ) as response:
                 if response.status == 401:
                     raise InvalidAuth("Local bearer token rejected")
