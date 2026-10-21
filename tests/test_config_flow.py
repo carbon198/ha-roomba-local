@@ -47,6 +47,19 @@ async def test_user_flow(hass, api):
         await hass.async_block_till_done()
 
 
+async def test_invalid_certificate_option_must_be_boolean(hass):
+    flow = LocalConfigFlow()
+    flow.hass = hass
+    result = await flow.async_step_user(
+        {
+            "api_url": URL,
+            "bearer_token": TOKEN,
+            CONF_ALLOW_INVALID_CERTIFICATE: "true",
+        }
+    )
+    assert result["errors"] == {"base": "invalid_input"}
+
+
 async def test_certificate_option_flow_preserves_existing_options(hass, entry):
     hass.config_entries.async_update_entry(entry, options={"cleaning_mode": 6})
     result = await hass.config_entries.options.async_init(entry.entry_id)
