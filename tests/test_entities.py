@@ -133,6 +133,37 @@ async def test_acme_challenge_sensor(hass, setup_entry, document):
     assert "type" not in state.attributes
 
 
+async def test_dock_report_sensor_exposes_report_fields_as_diagnostics(hass, setup_entry, document):
+    entry = setup_entry
+    report = {
+        "reportType": "padDry",
+        "reportTime": 1700000000,
+        "pdState": 701,
+        "error": 0,
+        "bbk": {"totalPadDry": 4, "totalPadDryTime": 3600},
+        "cap": {"pd": 2},
+    }
+    entry.runtime_data.async_set_updated_data(
+        Telemetry.parse(
+            document
+            | {"dock_reports": {"paddry": {"payload": report, "received_at": 1700000001.5}}},
+            ROBOT,
+        )
+    )
+    await hass.async_block_till_done()
+
+    identifier = entity_id(hass, entry, "sensor", "dock_paddry_report")
+    sensor = entity(hass, identifier)
+    state = hass.states.get(identifier)
+    assert sensor.native_value.isoformat() == "2023-11-14T22:13:20+00:00"
+    assert er.async_get(hass).async_get(identifier).entity_category.value == "diagnostic"
+    assert state.attributes["pdState"] == 701
+    assert state.attributes["bbk"] == {"totalPadDry": 4, "totalPadDryTime": 3600}
+    assert state.attributes["cap"] == {"pd": 2}
+    assert state.attributes["report_received_at"] == "2023-11-14T22:13:21.500000+00:00"
+    assert state.attributes["icon"] == "mdi:weather-sunny"
+
+
 @pytest.mark.parametrize(
     ("phase", "cycle", "expected"),
     [

@@ -46,6 +46,29 @@ def test_credentials_and_older_server(document):
     assert not data.segment_catalog_complete
 
 
+def test_dock_reports_are_optional_and_bounded(document):
+    payload = {
+        "reportType": "padDry",
+        "reportTime": 1700000000,
+        "pdState": 701,
+        "bbk": {"totalPadDry": 4, "totalPadDryTime": 3600},
+    }
+    data = Telemetry.parse(
+        document | {"dock_reports": {"paddry": {"payload": payload, "received_at": 1700000001.5}}},
+        ROBOT,
+    )
+    assert data.dock_reports["paddry"]["payload"] == payload
+    assert Telemetry.parse(document, ROBOT).dock_reports == {}
+    for reports in (
+        {"unknown": {"payload": {}, "received_at": 1}},
+        {"paddry": {"payload": [], "received_at": 1}},
+        {"paddry": {"payload": {"x": float("inf")}, "received_at": 1}},
+        {"paddry": {"payload": {}, "received_at": float("nan")}},
+    ):
+        with pytest.raises(ValueError):
+            Telemetry.parse(document | {"dock_reports": reports}, ROBOT)
+
+
 @pytest.mark.parametrize(
     ("key", "bad"),
     [

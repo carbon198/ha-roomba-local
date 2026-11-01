@@ -312,6 +312,18 @@
       "acme_dns_challenge": {
         "name": "ACME DNS challenge"
       },
+      "dock_evacuation_report": {
+        "name": "Evacuation report"
+      },
+      "dock_refill_report": {
+        "name": "Dock refill report"
+      },
+      "dock_padwash_report": {
+        "name": "Pad wash report"
+      },
+      "dock_paddry_report": {
+        "name": "Pad dry report"
+      },
       "localized_map": {
         "name": "Localized map"
       },

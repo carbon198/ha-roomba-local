@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from time import monotonic
 from typing import TYPE_CHECKING
 
+from homeassistant.const import EntityCategory
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .entity import LocalEntity
 from .map_labels import map_number
@@ -16,6 +18,13 @@ if TYPE_CHECKING:
     from . import LocalConfigEntry
 
 PARALLEL_UPDATES = 0
+
+DOCK_REPORTS = {
+    "evacuation": ("dock_evacuation_report", "Evacuation report", "mdi:delete-sweep"),
+    "refill": ("dock_refill_report", "Dock refill report", "mdi:water-plus"),
+    "padwash": ("dock_padwash_report", "Pad wash report", "mdi:water-sync"),
+    "paddry": ("dock_paddry_report", "Pad dry report", "mdi:weather-sunny"),
+}
 
 
 async def async_setup_entry(
@@ -31,6 +40,7 @@ async def async_setup_entry(
             if field["kind"] == "sensor" and expose_field(field)
         ]
         + [ACMEDNSChallengeSensor(coordinator)]
+        + [DockReportSensor(coordinator, report_type) for report_type in DOCK_REPORTS]
     )
 
 
@@ -59,6 +69,50 @@ class ACMEDNSChallengeSensor(LocalEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, object]:
         challenge = self.coordinator.data.acme_dns_challenge
         return {"name": challenge["name"], "type": challenge["type"]} if challenge else {}
+
+
+class DockReportSensor(CoordinatorEntity["LocalCoordinator"], SensorEntity):
+    _attr_has_entity_name = True
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: LocalCoordinator, report_type: str) -> None:
+        super().__init__(coordinator)
+        key, name, icon = DOCK_REPORTS[report_type]
+        self.report_type = report_type
+        self._attr_unique_id = coordinator.config_entry.unique_id + "_" + key
+        self._attr_translation_key = key
+        self._attr_name = name
+        self._attr_icon = icon
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.report_type in self.coordinator.data.dock_reports
+
+    @property
+    def native_value(self) -> datetime | None:
+        report = self.coordinator.data.dock_reports.get(self.report_type)
+        if report is None:
+            return None
+        timestamp = report["payload"].get("reportTime", report["received_at"])
+        if type(timestamp) not in (int, float):
+            timestamp = report["received_at"]
+        try:
+            return datetime.fromtimestamp(timestamp, timezone.utc)
+        except (OverflowError, OSError, ValueError):
+            return datetime.fromtimestamp(report["received_at"], timezone.utc)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        report = self.coordinator.data.dock_reports.get(self.report_type)
+        if report is None:
+            return {}
+        return {
+            **report["payload"],
+            "report_received_at": datetime.fromtimestamp(
+                report["received_at"], timezone.utc
+            ).isoformat(),
+        }
 
 
 class LocalSensor(LocalEntity, SensorEntity):

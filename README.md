@@ -12,7 +12,8 @@ This is a custom Home Assistant integration. The emulator runs separately and ha
 
 - Vacuum controls: start, pause, stop, return to dock and locate.
 - Room cleaning through Home Assistant's vacuum area mappings.
-- Battery, mission status, robot errors and dock diagnostics.
+- Battery, mission status, robot errors and dock diagnostics, including the
+  latest evacuation, refill, pad-wash and pad-dry reports.
 - Supported robot settings and cleaning-mode selection.
 - Saved-map images with live position and mission trails.
 - Reported model/SKU, firmware and serial number when available.

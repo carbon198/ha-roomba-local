@@ -57,6 +57,38 @@ class DNSChallenge(TypedDict):
     value: str
 
 
+DOCK_REPORT_TYPES = {"evacuation", "refill", "padwash", "paddry"}
+
+
+def _validate_report_payload(payload: dict[str, Any]) -> None:
+    pending = [(payload, 0)]
+    items = 0
+    while pending:
+        value, depth = pending.pop()
+        items += 1
+        if items > 4096 or depth > 8:
+            raise ValueError("Invalid dock report payload")
+        if isinstance(value, dict):
+            if len(value) > 512 or any(
+                not isinstance(key, str) or len(key) > 128 or any(ord(char) < 32 for char in key)
+                for key in value
+            ):
+                raise ValueError("Invalid dock report object")
+            pending.extend((item, depth + 1) for item in value.values())
+        elif isinstance(value, list):
+            if len(value) > 512:
+                raise ValueError("Invalid dock report array")
+            pending.extend((item, depth + 1) for item in value)
+        elif isinstance(value, str):
+            if len(value) > 4096:
+                raise ValueError("Invalid dock report string")
+        elif type(value) is float:
+            if not math.isfinite(value):
+                raise ValueError("Invalid dock report number")
+        elif value is not None and type(value) not in (int, bool):
+            raise ValueError("Invalid dock report value")
+
+
 def normalize_url(value: str) -> str:
     url = urlsplit(value.strip())
     if (
@@ -104,6 +136,7 @@ class Telemetry:
     map_inventory: list[str] | None = None
     device: DeviceMetadata = dataclass_field(default_factory=DeviceMetadata)
     acme_dns_challenge: DNSChallenge | None = None
+    dock_reports: dict[str, dict[str, Any]] = dataclass_field(default_factory=dict)
 
     @classmethod
     def parse(cls, data: Any, robot_id: str) -> Telemetry:
@@ -363,6 +396,19 @@ class Telemetry:
             or not re.fullmatch(r"[A-Za-z0-9_-]{43}", challenge["value"])
         ):
             raise ValueError("Invalid ACME DNS challenge")
+        dock_reports = data.get("dock_reports", {})
+        if not isinstance(dock_reports, dict) or not set(dock_reports) <= DOCK_REPORT_TYPES:
+            raise ValueError("Invalid dock reports")
+        for report in dock_reports.values():
+            if (
+                not isinstance(report, dict)
+                or set(report) != {"payload", "received_at"}
+                or not isinstance(report["payload"], dict)
+                or type(report["received_at"]) not in (int, float)
+                or not math.isfinite(report["received_at"])
+            ):
+                raise ValueError("Invalid dock report")
+            _validate_report_payload(report["payload"])
         return cls(
             robot_id,
             data["online"],
@@ -381,4 +427,5 @@ class Telemetry:
             inventory,
             cast(DeviceMetadata, device),
             cast(DNSChallenge | None, challenge),
+            dock_reports,
         )
