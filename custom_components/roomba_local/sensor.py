@@ -79,6 +79,7 @@ class DockReportSensor(CoordinatorEntity["LocalCoordinator"], SensorEntity):
     def __init__(self, coordinator: LocalCoordinator, report_type: str) -> None:
         super().__init__(coordinator)
         key, name, icon = DOCK_REPORTS[report_type]
+        assert coordinator.config_entry.unique_id is not None
         self.report_type = report_type
         self._attr_unique_id = coordinator.config_entry.unique_id + "_" + key
         self._attr_translation_key = key
