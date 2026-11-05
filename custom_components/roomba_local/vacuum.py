@@ -192,6 +192,9 @@ class LocalVacuum(LocalEntity, StateVacuumEntity):
             return VacuumActivity.ERROR
         if phase in ("hmPostMsn", "hmMidMsn", "hmUsrDock", "hmUsrChrg"):
             return VacuumActivity.RETURNING
+        # Station maintenance can run before the mission cycle is cleared.
+        if phase in ("evac", "padwash"):
+            return VacuumActivity.DOCKED
         if phase in ("charge", "idle") and values.get("mission_cycle") in ("none", None):
             return VacuumActivity.DOCKED if phase == "charge" else VacuumActivity.IDLE
         if phase in ("pause", "stop") and values.get("mission_cycle") not in ("none", None):
