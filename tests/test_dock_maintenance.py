@@ -8,7 +8,7 @@ from .conftest import ROBOT
 from .test_entities import entity_id
 
 
-@pytest.mark.parametrize("phase", ["evac", "padwash"])
+@pytest.mark.parametrize("phase", ["evac", "padWash", "padwash"])
 @pytest.mark.parametrize("cycle", ["clean", "none", None])
 async def test_station_maintenance_is_docked(hass, setup_entry, document, phase, cycle):
     coordinator = setup_entry.runtime_data
@@ -28,7 +28,10 @@ async def test_station_maintenance_is_docked(hass, setup_entry, document, phase,
     await hass.async_block_till_done()
 
     assert hass.states.get(entity_id(hass, setup_entry, "vacuum", "vacuum")).state == "docked"
-    assert hass.states.get(entity_id(hass, setup_entry, "sensor", "mission_phase")).state == phase
+    assert (
+        hass.states.get(entity_id(hass, setup_entry, "sensor", "mission_phase")).state
+        == phase.lower()
+    )
     assert (
         hass.states.get(
             entity_id(hass, setup_entry, "binary_sensor", "robot_mqtt_connection")
@@ -45,7 +48,7 @@ async def test_post_mission_station_sequence_has_no_unknown_activity(hass, setup
         ("hmPostMsn", "clean", "returning"),
         ("evac", "clean", "docked"),
         ("hmPostMsn", "clean", "returning"),
-        ("padwash", "clean", "docked"),
+        ("padWash", "clean", "docked"),
         ("charge", "none", "docked"),
     ):
         coordinator.async_set_updated_data(
