@@ -26,6 +26,8 @@ Pad-wash and pad-dry settings and buttons also require an explicit supported doc
 Feature-specific sensor descriptors are included only after a positive capability or field report;
 Home Assistant adds them when those reports arrive. An existing entity can remain unavailable if
 the feature later stops being reported. The additions are not yet validated on a live 705.
+Low-level dock-capability and raw robot-error diagnostics are disabled by default; enable them from
+the entity registry when you need to inspect them.
 
 <details>
 <summary>Screenshot 1</summary>

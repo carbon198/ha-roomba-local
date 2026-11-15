@@ -55,6 +55,11 @@ async def test_setup_and_device_identity(hass, setup_entry, document):
     assert hass.states.get(entity_id(hass, entry, "sensor", "mission_phase")).state == "charge"
     assert hass.states.get(entity_id(hass, entry, "sensor", "mission_error")).state == "code_0"
     assert entity_id(hass, entry, "sensor", "dock_refill_state") is None
+    entity_registry = er.async_get(hass)
+    for key in ("dock_cap_evacuate", "dock_cap_pad_dry", "dock_cap_pad_wash"):
+        assert (
+            entity_registry.async_get(entity_id(hass, entry, "sensor", key)).disabled_by is not None
+        )
     data = await async_get_config_entry_diagnostics(hass, entry)
     assert TOKEN not in str(data)
     assert ROBOT not in str(data)
@@ -183,6 +188,14 @@ async def test_705_dock_diagnostics(hass, setup_entry, document):
     )
     await hass.async_block_till_done()
 
+    hidden_diagnostics = {
+        "dock_cap_evacuate",
+        "dock_cap_pad_wash",
+        "dock_cap_pad_dry",
+        "dock_cap_pad_wet_out",
+        "stats_unprocessed_error",
+    }
+    registry = er.async_get(hass)
     for key, expected in {
         "dock_refill_state": "code_404",
         "dock_tank_level": "100",
@@ -194,7 +207,11 @@ async def test_705_dock_diagnostics(hass, setup_entry, document):
         "pad_wash_heat_raw": "code_2",
         "stats_unprocessed_error": "picea unknown fault code:2105",
     }.items():
-        assert hass.states.get(entity_id(hass, entry, "sensor", key)).state == expected
+        identifier = entity_id(hass, entry, "sensor", key)
+        if key in hidden_diagnostics:
+            assert registry.async_get(identifier).disabled_by is not None
+        else:
+            assert hass.states.get(identifier).state == expected
 
 
 @pytest.mark.parametrize(

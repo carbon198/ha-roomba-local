@@ -53,6 +53,11 @@ class LocalEntity(CoordinatorEntity["LocalCoordinator"]):
         self._attr_entity_registry_enabled_default = self.key not in (
             "runtime_hours_raw",
             "runtime_minutes_raw",
+            "stats_unprocessed_error",
+            "dock_cap_evacuate",
+            "dock_cap_pad_dry",
+            "dock_cap_pad_wash",
+            "dock_cap_pad_wet_out",
         )
 
     @property
