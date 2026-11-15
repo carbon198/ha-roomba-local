@@ -19,15 +19,6 @@ This is a custom Home Assistant integration. The emulator runs separately and ha
 - Local push updates, automatic reconnection and reauthentication.
 
 Available features depend on what your robot reports. Tested hardware: **Roomba 505 / V4**.
-The experimental 705-derived diagnostics expose dock evacuation/wash/dry/refill capabilities,
-refill state, clean-water tank level and robot error detail when reported. The mop-wash heat selector appears
-only when the robot reports that setting and its dock supports the corresponding heat level.
-Pad-wash and pad-dry settings and buttons also require an explicit supported dock capability.
-Feature-specific sensor descriptors are included only after a positive capability or field report;
-Home Assistant adds them when those reports arrive. An existing entity can remain unavailable if
-the feature later stops being reported. The additions are not yet validated on a live 705.
-Low-level dock-capability and raw robot-error diagnostics are disabled by default; enable them from
-the entity registry when you need to inspect them.
 
 <details>
 <summary>Screenshot 1</summary>
@@ -99,5 +90,3 @@ Configure room-to-area mappings on the vacuum entity for room cleaning. Choose t
 Map images show saved floor plans, reported positions and mission trails—not measured cleaning coverage. Delete maps through the emulator's web editor; confirmed robot-side deletion removes their HA image entities.
 
 Controls and settings remain robot-reported, not optimistic. Commands are not replayed when a disconnected robot returns.
-Dock operation buttons are created only when the dock reports the matching evacuation, pad-drying
-or pad-washing capability.
