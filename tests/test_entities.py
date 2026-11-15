@@ -54,6 +54,7 @@ async def test_setup_and_device_identity(hass, setup_entry, document):
     assert entity_id(hass, entry, "sensor", "mission_cycle") is None
     assert hass.states.get(entity_id(hass, entry, "sensor", "mission_phase")).state == "charge"
     assert hass.states.get(entity_id(hass, entry, "sensor", "mission_error")).state == "code_0"
+    assert entity_id(hass, entry, "sensor", "dock_refill_state") is None
     data = await async_get_config_entry_diagnostics(hass, entry)
     assert TOKEN not in str(data)
     assert ROBOT not in str(data)
@@ -131,6 +132,69 @@ async def test_acme_challenge_sensor(hass, setup_entry, document):
     assert state.state == "unknown"
     assert "name" not in state.attributes
     assert "type" not in state.attributes
+
+
+async def test_705_dock_diagnostics(hass, setup_entry, document):
+    entry = setup_entry
+    values = {
+        "dock_refill_state": 404,
+        "dock_tank_level": 100,
+        "dock_cap_evacuate": 1,
+        "dock_cap_pad_wash": 4,
+        "dock_cap_pad_dry": 3,
+        "dock_cap_pad_wet_out": 1,
+        "dock_cap_fluid_refill": 2,
+        "pad_wash_heat_raw": 2,
+        "stats_unprocessed_error": "picea unknown fault code:2105",
+    }
+    available = {key: True for key in values}
+    field_names = {
+        "dock_refill_state": "Dock refill status",
+        "dock_tank_level": "Dock clean-water tank level (raw)",
+        "dock_cap_evacuate": "Dock evacuation capability",
+        "dock_cap_pad_wash": "Dock pad washing capability",
+        "dock_cap_pad_dry": "Dock pad drying capability",
+        "dock_cap_pad_wet_out": "Dock pad wet-out capability",
+        "dock_cap_fluid_refill": "Dock fluid refill capability",
+        "pad_wash_heat_raw": "Mop wash heat raw code",
+        "stats_unprocessed_error": "Unprocessed robot error detail",
+    }
+    existing_fields = {field["key"] for field in document["fields"]}
+    entry.runtime_data.async_set_updated_data(
+        Telemetry.parse(
+            document
+            | {
+                "fields": document["fields"]
+                + [
+                    {
+                        "key": key,
+                        "name": name,
+                        "kind": "sensor",
+                        "entity_category": "diagnostic",
+                    }
+                    for key, name in field_names.items()
+                    if key not in existing_fields
+                ],
+                "values": document["values"] | values,
+                "available": document["available"] | available,
+            },
+            ROBOT,
+        )
+    )
+    await hass.async_block_till_done()
+
+    for key, expected in {
+        "dock_refill_state": "code_404",
+        "dock_tank_level": "100",
+        "dock_cap_evacuate": "code_1",
+        "dock_cap_pad_wash": "code_4",
+        "dock_cap_pad_dry": "code_3",
+        "dock_cap_pad_wet_out": "code_1",
+        "dock_cap_fluid_refill": "code_2",
+        "pad_wash_heat_raw": "code_2",
+        "stats_unprocessed_error": "picea unknown fault code:2105",
+    }.items():
+        assert hass.states.get(entity_id(hass, entry, "sensor", key)).state == expected
 
 
 @pytest.mark.parametrize(
@@ -228,6 +292,11 @@ async def test_settings_and_modes(hass, setup_entry, api, document):
     )
     api["setting"].assert_awaited_with("suction_level", 4)
     assert hass.states.get(setting_id).state == "option_3"
+    heat_id = entity_id(hass, entry, "select", "setting_pad_wash_heat")
+    heat = entity(hass, heat_id)
+    assert heat.options == ["option_0", "option_1"]
+    await heat.async_select_option("option_0")
+    api["setting"].assert_awaited_with("pad_wash_heat", 0)
     mode_id = entity_id(hass, entry, "select", "cleaning_mode")
     await hass.services.async_call(
         "select", "select_option", {"entity_id": mode_id, "option": "vacuum_only"}, blocking=True

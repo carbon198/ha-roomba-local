@@ -24,14 +24,25 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
-    async_add_entities(
-        [
-            LocalSensor(coordinator, field)
+    added_fields: set[str] = set()
+
+    def discover_supported_fields() -> None:
+        if not coordinator.last_update_success:
+            return
+        fields = [
+            field
             for field in coordinator.data.fields
-            if field["kind"] == "sensor" and expose_field(field)
+            if field["kind"] == "sensor"
+            and expose_field(field)
+            and field["key"] not in added_fields
         ]
-        + [ACMEDNSChallengeSensor(coordinator)]
-    )
+        if fields:
+            async_add_entities([LocalSensor(coordinator, field) for field in fields])
+            added_fields.update(field["key"] for field in fields)
+
+    entry.async_on_unload(coordinator.async_add_listener(discover_supported_fields))
+    discover_supported_fields()
+    async_add_entities([ACMEDNSChallengeSensor(coordinator)])
 
 
 class ACMEDNSChallengeSensor(LocalEntity, SensorEntity):

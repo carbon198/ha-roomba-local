@@ -112,6 +112,7 @@ class PresentationTests(unittest.TestCase):
             46,
             47,
             48,
+            567,
             66,
             68,
             69,
@@ -181,6 +182,9 @@ class PresentationTests(unittest.TestCase):
                 )
         self.assertEqual(presentation.display_value("mission_error", 7), "Left wheel sensor issue")
         self.assertEqual(
+            presentation.display_value("mission_error", 567), "Unmapped robot exception"
+        )
+        self.assertEqual(
             presentation.display_value("not_ready_code", 7), "Readiness code 7 (meaning unverified)"
         )
         self.assertEqual(
@@ -193,6 +197,7 @@ class PresentationTests(unittest.TestCase):
     def test_all_verified_dock_and_pad_states_remain_covered(self):
         for sensor, codes in (
             ("dock_state", set(range(300, 306)) | set(range(400, 407))),
+            ("dock_refill_state", set(range(400, 407)) | set(range(449, 465))),
             ("dock_pad_wash_state", {600, 601, 602, 603, 606, 607, 608}),
             ("dock_pad_dry_state", set(range(700, 708))),
         ):
@@ -201,6 +206,17 @@ class PresentationTests(unittest.TestCase):
                     self.assertFalse(
                         presentation.display_value(sensor, code).startswith("Unrecognized")
                     )
+        for sensor, value, expected in (
+            ("dock_cap_evacuate", 1, "Available"),
+            ("dock_cap_pad_wash", 4, "Deep hot-water washing"),
+            ("dock_cap_pad_dry", 3, "Heated-air drying"),
+            ("dock_cap_pad_wet_out", 1, "Supported"),
+            ("dock_cap_fluid_refill", 2, "Automatic"),
+            ("pad_wash_heat_raw", 1, "Default heat"),
+        ):
+            with self.subTest(sensor=sensor):
+                self.assertEqual(presentation.display_value(sensor, value), expected)
+                self.assertEqual(presentation.display_value(sensor, 999), "Unrecognized (999)")
         for key in ("audio_volume", "pad_wetness"):
             for level in (0, 1, 2, 3, 50):
                 self.assertEqual(presentation.display_value(key, level), level)
