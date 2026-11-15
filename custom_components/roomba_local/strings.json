@@ -214,6 +214,89 @@
           "code_665": "Pad wash hardware issue"
         }
       },
+      "dock_refill_state": {
+        "name": "Dock refill status",
+        "state": {
+          "code_400": "Refill state unknown",
+          "code_401": "Refill OK",
+          "code_402": "Refill started",
+          "code_403": "Refilling tank",
+          "code_404": "Refill complete",
+          "code_405": "Refill complete - insufficient water",
+          "code_406": "Dock updating",
+          "code_449": "Invalid dock state for refill",
+          "code_450": "Refill tank missing",
+          "code_451": "Refill tank low",
+          "code_452": "Refill tank level sensor issue",
+          "code_453": "Refill alignment failure",
+          "code_454": "Refill clogged",
+          "code_455": "Refill pump failure",
+          "code_456": "Incorrect robot tank",
+          "code_457": "Refill communication failure",
+          "code_458": "Cannot extend refill snorkel",
+          "code_459": "Cannot retract refill snorkel",
+          "code_460": "Dock tank level not decreasing",
+          "code_461": "Robot tank level not increasing",
+          "code_462": "Refill hardware issue",
+          "code_463": "Dock tank level decreasing unexpectedly",
+          "code_464": "Detergent tank missing or empty"
+        }
+      },
+      "dock_cap_pad_wash": {
+        "name": "Dock pad washing capability",
+        "state": {
+          "code_0": "Not supported",
+          "code_1": "Pad washing",
+          "code_2": "Heated pad washing",
+          "code_3": "High-heat pad washing",
+          "code_4": "Deep hot-water washing"
+        }
+      },
+      "dock_cap_evacuate": {
+        "name": "Dock evacuation capability",
+        "state": {
+          "code_0": "Not available",
+          "code_1": "Available"
+        }
+      },
+      "dock_cap_pad_dry": {
+        "name": "Dock pad drying capability",
+        "state": {
+          "code_0": "Not supported",
+          "code_1": "Basic drying",
+          "code_2": "Unheated-air drying",
+          "code_3": "Heated-air drying"
+        }
+      },
+      "dock_cap_pad_wet_out": {
+        "name": "Dock pad wet-out capability",
+        "state": {
+          "code_0": "Not supported",
+          "code_1": "Supported"
+        }
+      },
+      "dock_cap_fluid_refill": {
+        "name": "Dock fluid refill capability",
+        "state": {
+          "code_0": "Not available",
+          "code_1": "Controllable",
+          "code_2": "Automatic"
+        }
+      },
+      "pad_wash_heat_raw": {
+        "name": "Mop wash heat raw code",
+        "state": {
+          "code_0": "No heat",
+          "code_1": "Default heat",
+          "code_2": "High heat"
+        }
+      },
+      "dock_tank_level": {
+        "name": "Dock clean-water tank level (raw)"
+      },
+      "stats_unprocessed_error": {
+        "name": "Robot error detail"
+      },
       "dock_state": {
         "name": "Dock status",
         "state": {
@@ -348,6 +431,7 @@
           "code_46": "Battery too low to clean",
           "code_47": "Required update",
           "code_48": "Room entrance blocked",
+          "code_567": "Unmapped robot exception",
           "code_66": "Memory storage issue",
           "code_68": "Obstacle camera issue",
           "code_69": "Cannot find way home",
@@ -681,6 +765,14 @@
           "option_15": "15 minutes",
           "option_20": "20 minutes",
           "option_25": "25 minutes"
+        }
+      },
+      "pad_wash_heat": {
+        "name": "Mop wash heat",
+        "state": {
+          "option_0": "No heat",
+          "option_1": "Default heat",
+          "option_2": "High heat"
         }
       },
       "suction_level": {

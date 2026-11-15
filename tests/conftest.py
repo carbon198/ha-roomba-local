@@ -64,6 +64,19 @@ def document():
                 "entity_category": "diagnostic",
             },
             {"key": "mission_error", "name": "Error", "kind": "sensor"},
+            *[
+                {
+                    "key": key,
+                    "name": name,
+                    "kind": "sensor",
+                    "entity_category": "diagnostic",
+                }
+                for key, name in (
+                    ("dock_cap_evacuate", "Dock evacuation capability"),
+                    ("dock_cap_pad_dry", "Dock pad drying capability"),
+                    ("dock_cap_pad_wash", "Dock pad washing capability"),
+                )
+            ],
         ],
         "values": {
             "battery": 75,
@@ -74,6 +87,9 @@ def document():
             "last_data_received": "2026-10-16T00:00:00+00:00",
             "localized_map": "one",
             "mission_error": 0,
+            "dock_cap_evacuate": 1,
+            "dock_cap_pad_dry": 2,
+            "dock_cap_pad_wash": 1,
         },
         "available": {
             key: True
@@ -86,6 +102,9 @@ def document():
                 "last_data_received",
                 "localized_map",
                 "mission_error",
+                "dock_cap_evacuate",
+                "dock_cap_pad_dry",
+                "dock_cap_pad_wash",
             )
         },
         "segments": [{"id": "one:1:1", "name": "Kitchen", "group": "Map one"}],
@@ -112,6 +131,13 @@ def document():
                 "kind": "select",
                 "value": 3,
                 "options": {"2": "Light", "3": "Normal", "4": "Deep"},
+            },
+            {
+                "key": "pad_wash_heat",
+                "name": "Mop wash heat",
+                "kind": "select",
+                "value": 1,
+                "options": {"0": "No heat", "1": "Default heat"},
             },
         ],
         "cleaning_modes": [2, 4, 6],
